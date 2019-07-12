@@ -1,0 +1,48 @@
+{
+  "name": "@epsor/consumer-wrapper",
+  "version": "2.0.0",
+  "description": "Event consumer",
+  "author": "Epsor",
+  "homepage": "https://github.com/Epsor/epsor-v2/tree/master/packages/tunnel-b2c-api-test-kafka-stream#readme",
+  "license": "ISC",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Epsor/epsor-v2.git"
+  },
+  "scripts": {
+    "prepare": "npm run build",
+    "test": "NODE_ENV=test jest --coverage",
+    "start": "babel src -d dist --watch --copy-files --verbose",
+    "clean": "rm -rf dist",
+    "build": "babel src -d dist --ignore 'src/**/*.test.js'"
+  },
+  "bugs": {
+    "url": "https://github.com/Epsor/epsor-v2/issues"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.5.0",
+    "@babel/core": "^7.5.4",
+    "@babel/preset-env": "^7.5.4",
+    "@epsor/dto": "^2.0.0",
+    "@epsor/kafka-producer": "^2.0.0",
+    "@epsor/kafka-streams": "^2.0.0",
+    "@epsor/logger": "^2.0.0",
+    "aigle": "^1.14.0",
+    "mongodb": "^3.2.7",
+    "nodemon": "^1.19.1",
+    "redis": "^2.8.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "babel-jest": "^24.8.0",
+    "eslint": "^5.3.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-react": "^7.12.4",
+    "jest": "^24.8.0",
+    "jest-expo": "^33.0.2",
+    "prettier": "^1.16.4"
+  }
+}
