@@ -1,0 +1,54 @@
+# `@epsor/consumer-wrapper`
+
+It wrap the consumer connection to kafka, redis connexion, mongodb connexion to help you to develop new consumer faster.
+
+## Requirements
+
+`@epsor/consumer-wrapper` assumes that a few environment variables are set:
+
+- `EVENT_TOPIC` - The event topic to consume
+- `MOGODB_URL` - The mongoDB server url
+- `REDIS_URL` - The redis server url
+- `KAFKA_HOST` - The kafka server info IP:PORT
+- `KAFKA_GROUP_ID` - The kafka group id
+
+## AbstractHandler
+
+This package comes with `AbstractHandler` which is supposed to be extanded by your consumers handler.
+
+Here an example of a handler:
+
+```js
+class UserCreateHandler extends AbstractHandler {
+  /** @inheritdoc */
+  static get handlerName() {
+    return 'UserCreate';
+  }
+
+  /** @inheritdoc */
+  static get allowedTypes() {
+    return ['user.created'];
+  }
+
+  /** @inheritdoc */
+  static handle(dependencies, userCreatedDto) {
+    depencies.mongo.insert(userCreatedDto.fields);
+  }
+}
+```
+
+## Run a consumer
+
+```js
+import { Consumer } from '@epsor/consumer-wrapper';
+
+/** @type {AbstractHandler[]} */
+import handlers from './handlers';
+
+(async () => {
+  const consumer = new Consumer('b2c', handlers);
+  await consumer.initDependencies();
+  await consumer.createCollections('users');
+  await consumer.run();
+})();
+```
