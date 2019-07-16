@@ -6,7 +6,7 @@ import producer from '@epsor/kafka-producer';
 import forEach from 'aigle/forEach';
 import redis from 'redis';
 
-const mongoDbUrl = process.env.MOGODB_URL || 'mongodb://localhost:27017';
+const mongoDbUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
 /**

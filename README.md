@@ -7,7 +7,7 @@ It wrap the consumer connection to kafka, redis connexion, mongodb connexion to 
 `@epsor/consumer-wrapper` assumes that a few environment variables are set:
 
 - `EVENT_TOPIC` - The event topic to consume
-- `MOGODB_URL` - The mongoDB server url
+- `MONGODB_URL` - The mongoDB server url
 - `REDIS_URL` - The redis server url
 - `KAFKA_HOST` - The kafka server info IP:PORT
 - `KAFKA_GROUP_ID` - The kafka group id
