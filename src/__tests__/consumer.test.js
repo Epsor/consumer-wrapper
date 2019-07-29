@@ -90,7 +90,7 @@ describe('Consumer', () => {
       );
 
       const consumer = new Consumer('test', []);
-      await consumer.initDependencies();
+      await consumer.initDependencies({ mongo: false });
 
       expect(redis.createClient).toHaveBeenCalledTimes(1);
     });
@@ -105,7 +105,7 @@ describe('Consumer', () => {
       );
 
       const consumer = new Consumer('test', []);
-      await consumer.initDependencies({ redis: false });
+      await consumer.initDependencies({ mongo: false, redis: false });
 
       expect(redis.createClient).toHaveBeenCalledTimes(0);
     });

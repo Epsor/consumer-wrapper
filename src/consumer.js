@@ -1,6 +1,6 @@
 import logger from '@epsor/logger';
 import { encode, decode } from '@epsor/dto';
-import { MongoClient } from 'mongodb';
+import mongo from '@epsor/mongodb-wrapper';
 import Stream from '@epsor/kafka-streams';
 import producer from '@epsor/kafka-producer';
 import forEach from 'aigle/forEach';
@@ -60,8 +60,7 @@ class Consumer {
    */
   async initDependencies({ mongo: withMongo = true, redis: withRedis = true } = {}) {
     if (withMongo === true) {
-      const client = await MongoClient.connect(mongoDbUrl, { useNewUrlParser: true });
-      this.dependencies.mongo = client.db(this.type);
+      this.dependencies.mongo = await mongo.connect(mongoDbUrl, this.type);
     }
 
     if (withRedis === true) {
