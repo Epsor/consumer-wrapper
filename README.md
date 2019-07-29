@@ -19,6 +19,8 @@ This package comes with `AbstractHandler` which is supposed to be extanded by yo
 Here an example of a handler:
 
 ```js
+import { MongoDuplicateEntryError } from '@epsor/mongodb-wrapper';
+
 class UserCreateHandler extends AbstractHandler {
   /** @inheritdoc */
   static get handlerName() {
@@ -31,8 +33,15 @@ class UserCreateHandler extends AbstractHandler {
   }
 
   /** @inheritdoc */
-  static handle(dependencies, userCreatedDto) {
-    depencies.mongo.insert(userCreatedDto.fields);
+  static async handle({ mongo }, userCreatedDto) {
+    const users = await mongo.collection('users');
+    try {
+      await users.insertOne(userCreatedDto.fields);
+    } catch (err) {
+      if (err instanceof MongoDuplicateEntryError) {
+        // An error occurred
+      }
+    }
   }
 }
 ```
