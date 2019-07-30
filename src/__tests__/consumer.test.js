@@ -1,10 +1,18 @@
 import logger from '@epsor/logger';
 import { encode, decode } from '@epsor/dto';
-import mongodb from 'mongodb';
 import redis from 'redis';
 import Stream from '@epsor/kafka-streams';
 
+import mongo from '../mongoDb';
 import Consumer from '../consumer';
+
+afterEach(async () => {
+  if (mongo.connected) await mongo.disconnect();
+});
+
+afterAll(async () => {
+  if (mongo.conneected) await mongo.disconnect();
+});
 
 describe('Consumer', () => {
   describe('contructor', () => {
@@ -55,39 +63,21 @@ describe('Consumer', () => {
 
   describe('initDependencies', () => {
     it('should connect to mongoDb by default', async () => {
-      mongodb.MongoClient.connect = jest.fn(() =>
-        Promise.resolve({
-          db: jest.fn(),
-        }),
-      );
-
       const consumer = new Consumer('test', []);
       await consumer.initDependencies();
-
-      expect(mongodb.MongoClient.connect).toHaveBeenCalledTimes(1);
+      expect(mongo.connected).toBe(true);
     });
 
     it('should not connect to mongoDb if mongo = false', async () => {
-      mongodb.MongoClient.connect = jest.fn(() =>
-        Promise.resolve({
-          db: jest.fn(),
-        }),
-      );
-
       const consumer = new Consumer('test', []);
       await consumer.initDependencies({ mongo: false });
 
-      expect(mongodb.MongoClient.connect).toHaveBeenCalledTimes(0);
+      expect(mongo.connected).toBe(false);
     });
 
     it('should connect to redis by default', async () => {
       const pub = jest.fn();
       redis.createClient = jest.fn(() => ({ pub }));
-      mongodb.MongoClient.connect = jest.fn(() =>
-        Promise.resolve({
-          db: jest.fn(),
-        }),
-      );
 
       const consumer = new Consumer('test', []);
       await consumer.initDependencies({ mongo: false });
@@ -98,11 +88,6 @@ describe('Consumer', () => {
     it('should not connect to redis if redis = false', async () => {
       const pub = jest.fn();
       redis.createClient = jest.fn(() => ({ pub }));
-      mongodb.MongoClient.connect = jest.fn(() =>
-        Promise.resolve({
-          db: jest.fn(),
-        }),
-      );
 
       const consumer = new Consumer('test', []);
       await consumer.initDependencies({ mongo: false, redis: false });
@@ -275,7 +260,7 @@ describe('Consumer', () => {
       const handler = { type: 'A', allowedTypes: ['test'], handle: jest.fn() };
       const publish = jest.fn();
       const dependencies = {
-        mongodb,
+        mongo,
         redis: { publish },
       };
       const dto = new (class {

@@ -6,4 +6,5 @@ module.exports = {
   ...base,
   displayName: pack.name,
   name: pack.name,
+  preset: '@shelf/jest-mongodb',
 };

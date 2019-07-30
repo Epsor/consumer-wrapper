@@ -1,10 +1,11 @@
 import logger from '@epsor/logger';
 import { encode, decode } from '@epsor/dto';
-import mongo from '@epsor/mongodb-wrapper';
 import Stream from '@epsor/kafka-streams';
 import producer from '@epsor/kafka-producer';
 import forEach from 'aigle/forEach';
 import redis from 'redis';
+
+import mongo from './mongoDb';
 
 const mongoDbUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -53,7 +54,7 @@ class Consumer {
    *
    * @async
    * @param {Object.<String,Boolean>} options - The dependencies options
-   * @param {Boolean>} options.mongoDb        - If true, add `mongo` in consumer dependencies
+   * @param {Boolean>} options.mongo          - If true, add `mongo` in consumer dependencies
    * @param {Boolean>} options.redis          - If true, add `redis` in consumer dependencies
    *
    * @return {Promise.<Consumer>}             - Required dependencies
