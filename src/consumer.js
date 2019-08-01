@@ -7,9 +7,6 @@ import redis from 'redis';
 
 import mongo from './mongoDb';
 
-const mongoDbUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-
 /**
  * For optimization, it reduce AbstractHandler[] as Object<"dtoType",AbstractHandler[]>
  * [
@@ -61,10 +58,12 @@ class Consumer {
    */
   async initDependencies({ mongo: withMongo = true, redis: withRedis = true } = {}) {
     if (withMongo === true) {
+      const mongoDbUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
       this.dependencies.mongo = await mongo.connect(mongoDbUrl, this.type);
     }
 
     if (withRedis === true) {
+      const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
       this.dependencies.redis = await redis.createClient({ url: redisUrl });
     }
 

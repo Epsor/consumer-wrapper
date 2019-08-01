@@ -6,14 +6,6 @@ import Stream from '@epsor/kafka-streams';
 import mongo from '../mongoDb';
 import Consumer from '../consumer';
 
-afterEach(async () => {
-  if (mongo.connected) await mongo.disconnect();
-});
-
-afterAll(async () => {
-  if (mongo.conneected) await mongo.disconnect();
-});
-
 describe('Consumer', () => {
   describe('contructor', () => {
     it('should instance without errors', () => {
@@ -64,8 +56,9 @@ describe('Consumer', () => {
   describe('initDependencies', () => {
     it('should connect to mongoDb by default', async () => {
       const consumer = new Consumer('test', []);
+      mongo.connect = jest.fn();
       await consumer.initDependencies();
-      expect(mongo.connected).toBe(true);
+      expect(mongo.connect).toHaveBeenCalledTimes(1);
     });
 
     it('should not connect to mongoDb if mongo = false', async () => {
