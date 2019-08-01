@@ -27,7 +27,7 @@
     "@epsor/dto": "^2.0.0",
     "@epsor/kafka-producer": "^2.0.0",
     "@epsor/kafka-streams": "^2.0.0",
-    "@epsor/logger": "^2.0.0",
+    "@epsor/logger": "^1.0.0",
     "@epsor/mongodb-wrapper": "^2.0.0",
     "aigle": "^1.14.0",
     "mongodb": "^3.2.7",
