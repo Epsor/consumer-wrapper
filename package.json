@@ -1,5 +1,5 @@
 {
-  "name": "@epsor/kafka-streams",
+  "name": "@epsor/consumer-wrapper",
   "version": "2.0.0",
   "description": "Kafka stream abstraction",
   "author": "Epsor",
@@ -16,25 +16,51 @@
     "test": "NODE_ENV=test jest --coverage",
     "clean": "rm -rf dist",
     "build": "babel src -d dist --ignore 'src/**/*.test.js'",
-    "start": "babel src -d dist --ignore 'src/**/*.test.js' --watch"
+    "start": "babel src -d dist --ignore 'src/**/*.test.js' --watch",
+    "commit": "git-cz",
+    "lint": "eslint src --cache --max-warnings=0 --cache-location .eslintcache"
   },
   "bugs": {
     "url": "https://github.com/Epsor/epsor-v2/issues"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/git-cz"
+    }
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "npm run lint",
+      "pre-push": "npm run test"
+    }
   },
   "dependencies": {
     "@babel/cli": "^7.5.0",
     "@babel/core": "^7.5.4",
     "@babel/preset-env": "^7.5.4",
-    "@epsor/dto": "^2.0.0",
+    "@epsor/dto": "epsor/dto",
     "kafka-streams": "^4.12.0"
   },
   "devDependencies": {
+    "@commitlint/config-conventional": "^8.1.0",
     "babel-eslint": "^10.0.1",
+    "commitizen": "^4.0.3",
+    "commitlint": "^8.1.0",
     "eslint": "^5.3.0",
     "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-prettier": "^6.0.0",
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-prettier": "^3.1.0",
     "eslint-plugin-react": "^7.12.4",
+    "git-cz": "^3.2.1",
+    "husky": "^3.0.2",
     "jest": "^24.8.0",
     "jest-expo": "^33.0.2",
     "jest-extended": "^0.11.1",

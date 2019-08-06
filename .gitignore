@@ -1,0 +1,24 @@
+**.log
+**/.env
+.eslintcache
+
+### IDE-specific files
+.idea/*
+
+### Packages commonly-ignored directories
+**/node_modules/
+**/coverage
+**/dist
+
+### macOS template
+# General
+**/.DS_Store
+.AppleDouble
+.LSOverride
+
+# Templated files
+ecosystems/env.json
+
+# Storybook
+storybook-static
+.next
