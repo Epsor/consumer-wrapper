@@ -7,7 +7,7 @@ import mongo from '../mongoDb';
 import Consumer from '../consumer';
 
 describe('Consumer', () => {
-  describe('contructor', () => {
+  describe('Constructor', () => {
     it('should instance without errors', () => {
       expect(new Consumer('test', [])).toBeTruthy();
     });
