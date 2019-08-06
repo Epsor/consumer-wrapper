@@ -1,0 +1,10 @@
+**/node_modules
+packages/**/dist
+packages/**/build
+packages/**/webpack.*
+packages/**/gulpfile.*
+packages/**/migrations
+packages/**/seeds
+packages/server/update_maintenance.js
+packages/*/src/serviceWorker.js
+packages/storybook/storybook-static

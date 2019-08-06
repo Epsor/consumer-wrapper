@@ -1,0 +1,53 @@
+{
+  "parser": "babel-eslint",
+  "extends": ["airbnb", "plugin:prettier/recommended"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "mocha": true,
+    "jest": true
+  },
+  "rules": {
+    "class-methods-use-this": "warn",
+    "radix": "off",
+    "no-shadow": "warn",
+    "no-nested-ternary": "warn",
+    "func-names": "off",
+    "import/no-unresolved": ["error", { "ignore": ["^react"] }],
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": [
+          "**/*.stories.js",
+          "**/*.test.js",
+          "**/test/**/*.js",
+          "**/setupTests.js",
+          "**/jest.config.js"
+        ]
+      }
+    ],
+    "import/order": [
+      "error",
+      {
+        "newlines-between": "always",
+        "groups": ["builtin", ["external", "internal"], "parent", "sibling", "index"]
+      }
+    ],
+    "import/prefer-default-export": ["off"],
+    "jsx-a11y/label-has-for": ["off"],
+    "jsx-a11y/label-has-associated-control": ["off"],
+    "jsx-a11y/anchor-is-valid": [0],
+    "jsx-a11y/no-static-element-interactions": ["off"],
+    "jsx-a11y/click-events-have-key-events": ["off"],
+    "jsx-a11y/mouse-events-have-key-events": ["off"],
+    "react/no-array-index-key": ["off"],
+    "react/jsx-one-expression-per-line": ["off"],
+    "react/jsx-filename-extension": [2, { "extensions": [".js"] }],
+    "react/sort-prop-types": [2, { "sortShapeProp": true }],
+    "react/jsx-sort-props": [2, { "ignoreCase": true }],
+    "react/jsx-max-props-per-line": [2, { "maximum": 1, "when": "multiline" }],
+    "react/jsx-wrap-multilines": [0],
+    "react/no-did-update-set-state": [0],
+    "react/style-prop-object": ["off"]
+  }
+}
