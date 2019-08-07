@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/Epsor/consumer-wrapper.svg?style=svg)](https://circleci.com/gh/Epsor/consumer-wrapper) [![npm version](https://img.shields.io/npm/v/@epsor/consumer-wrapper.svg)](https://npmjs.org/package/@epsor/consumer-wrapper.svg "View this project on npm")
+
 # `@epsor/consumer-wrapper`
 
 It wrap the consumer connection to kafka, redis connexion, mongodb connexion to help you to develop new consumer faster.
