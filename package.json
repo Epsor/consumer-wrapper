@@ -2,25 +2,42 @@
   "name": "@epsor/consumer-wrapper",
   "version": "2.0.3",
   "description": "Event consumer",
-  "author": "Epsor",
   "homepage": "https://github.com/Epsor/epsor-v2/tree/master/packages/tunnel-b2c-api-test-kafka-stream#readme",
-  "license": "ISC",
-  "main": "dist/index.js",
+  "bugs": {
+    "url": "https://github.com/Epsor/epsor-v2/issues"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Epsor/epsor-v2.git"
   },
+  "license": "ISC",
+  "author": "Epsor",
+  "main": "dist/index.js",
   "scripts": {
-    "prepare": "npm run build",
-    "test": "NODE_ENV=test jest --coverage",
-    "start": "babel src -d dist --watch --copy-files --verbose",
-    "clean": "rm -rf dist",
     "build": "babel src -d dist --ignore 'src/**/*.test.js'",
+    "clean": "rm -rf dist",
     "commit": "git-cz",
-    "lint": "eslint src --cache --max-warnings=0 --cache-location .eslintcache"
+    "lint": "eslint src --cache --max-warnings=0 --cache-location .eslintcache",
+    "prepare": "npm run build",
+    "start": "babel src -d dist --watch --copy-files --verbose",
+    "test": "NODE_ENV=test jest --coverage"
   },
-  "bugs": {
-    "url": "https://github.com/Epsor/epsor-v2/issues"
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-commit": "npm run lint",
+      "pre-push": "npm run test"
+    }
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/git-cz"
+    }
   },
   "dependencies": {
     "@babel/cli": "^7.5.0",
@@ -29,8 +46,8 @@
     "@epsor/dto": "epsor/dto",
     "@epsor/kafka-producer": "^2.0.3",
     "@epsor/kafka-streams": "^2.0.3",
-    "@epsor/mongodb-wrapper": "^2.0.3",
     "@epsor/logger": "^1.0.0",
+    "@epsor/mongodb-wrapper": "^2.0.3",
     "aigle": "^1.14.0",
     "mongodb": "^3.2.7",
     "nodemon": "^1.19.1",
