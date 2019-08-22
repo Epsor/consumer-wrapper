@@ -1,6 +1,6 @@
 {
   "name": "@epsor/consumer-wrapper",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Event consumer",
   "homepage": "https://github.com/Epsor/epsor-v2/tree/master/packages/tunnel-b2c-api-test-kafka-stream#readme",
   "bugs": {
@@ -43,7 +43,7 @@
     "@babel/cli": "^7.5.0",
     "@babel/core": "^7.5.4",
     "@babel/preset-env": "^7.5.4",
-    "@epsor/dto": "epsor/dto",
+    "@epsor/dto": "^2.0.8",
     "@epsor/kafka-producer": "^2.0.3",
     "@epsor/kafka-streams": "^2.0.3",
     "@epsor/logger": "^1.0.0",
