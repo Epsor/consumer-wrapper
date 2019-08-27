@@ -270,6 +270,24 @@ describe('Consumer', () => {
       expect(publish).toHaveBeenCalledWith('test:test', 'coucou');
     });
 
+    it('should not log error witout redis', async () => {
+      const handler = { type: 'A', allowedTypes: ['test'], handle: jest.fn() };
+      const dependencies = {
+        mongo,
+      };
+      const dto = new (class {
+        static get type() {
+          return 'test';
+        }
+      })();
+
+      const consumer = new Consumer('test', [handler], dependencies);
+      consumer.initDependencies({ redis: false, mongo: false });
+
+      await consumer.handleMessage(dto, 'coucou');
+      expect(logger.error).toHaveBeenCalledTimes(0);
+    });
+
     it('should not throw an error if the handler throws an error', async () => {
       const handler = {
         type: 'A',

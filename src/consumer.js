@@ -169,7 +169,9 @@ class Consumer {
     await forEach(handlers, async handler => {
       try {
         await handler.handle(this.dependencies, dto);
-        await this.dependencies.redis.publish(`${this.type}:${dtoType}`, originalMessage);
+        if (this.dependencies.redis) {
+          await this.dependencies.redis.publish(`${this.type}:${dtoType}`, originalMessage);
+        }
       } catch (err) {
         logger.error('Cannot handle DTO', {
           tags: [this.type, 'consumer', dto.type, handler.constructor.handlerName],
