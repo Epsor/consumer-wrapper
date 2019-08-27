@@ -43,7 +43,11 @@ class Consumer {
     this.type = type;
     this.handlers = handlers.reduce(handlerReducer, {});
     this.dependencies = dependencies;
-    this.kafkaStream = new Stream({ groupId: type });
+    this.kafkaStream = new Stream({
+      groupId: type,
+      ...(process.env.KAFKA_USERNAME ? { 'sasl.username': process.env.KAFKA_USERNAME } : {}),
+      ...(process.env.KAFKA_PASSWORD ? { 'sasl.password': process.env.KAFKA_PASSWORD } : {}),
+    });
   }
 
   /**
