@@ -5,6 +5,9 @@ jobs:
       - image: circleci/node:lts
     steps:
       - checkout
+      - run:
+          name: 'NPM token'
+          command: echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} >> ~/.npmrc
       - restore_cache:
           key: npm-{{ checksum "package-lock.json" }}
       - run: npm install --production
@@ -14,6 +17,9 @@ jobs:
       - image: circleci/node:lts
     steps:
       - checkout
+      - run:
+          name: 'NPM token'
+          command: echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} >> ~/.npmrc
       - restore_cache:
           key: npm-{{ checksum "package-lock.json" }}
       - run: npm install
@@ -28,25 +34,13 @@ jobs:
       - image: circleci/node:lts
     steps:
       - checkout
+      - run:
+          name: 'NPM token'
+          command: echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} >> ~/.npmrc
       - restore_cache:
           key: npm-{{ checksum "package-lock.json" }}
       - run: npm install --ignore-scripts
       - run: npm run lint
-
-  deploy:
-    docker:
-      - image: circleci/node:lts
-    steps:
-      - checkout
-      - restore_cache:
-          key: npm-{{ checksum "package-lock.json" }}
-      - run: npm install --ignore-scripts --production
-      - run:
-          name: Authenticate with registry
-          command: echo "//registry.npmjs.org/:_authToken=$npm_TOKEN" > ~/repo/.npmrc
-      - run:
-          name: Publish package
-          command: npm publish
 
 workflows:
   version: 2
@@ -55,12 +49,3 @@ workflows:
       - test
       - lint
       - build
-      - deploy:
-          requires:
-            - test
-            - build
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
