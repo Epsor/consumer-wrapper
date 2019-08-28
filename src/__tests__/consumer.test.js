@@ -6,29 +6,9 @@ import Stream from '@epsor/kafka-streams';
 import mongo from '../mongoDb';
 import Consumer from '../consumer';
 
-let beforeEnv;
-
 describe('Consumer', () => {
-  beforeAll(() => {
-    beforeEnv = { ...process.env };
-  });
-
-  afterAll(() => {
-    process.env = beforeEnv;
-  });
-
   describe('Constructor', () => {
     it('should instance without errors', () => {
-      expect(new Consumer('test', [])).toBeTruthy();
-    });
-
-    it('should initialize with a username', () => {
-      process.env.KAFKA_USERNAME = 'username';
-      expect(new Consumer('test', [])).toBeTruthy();
-    });
-
-    it('should initialize with a password', () => {
-      process.env.KAFKA_PASSWORD = 'password';
       expect(new Consumer('test', [])).toBeTruthy();
     });
 
