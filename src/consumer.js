@@ -66,8 +66,6 @@ class Consumer {
       const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
       this.dependencies.redis = await redis.createClient({ url: redisUrl });
     }
-
-    await this.initStream();
   }
 
   /**
@@ -116,7 +114,7 @@ class Consumer {
    * Launch the message consumtion
    */
   run() {
-    return this.kafkaStream.getStream(process.env.EVENT_TOPIC, async originalMessage => {
+    const stream = this.kafkaStream.getStream(process.env.EVENT_TOPIC, async originalMessage => {
       try {
         const dto = decode(JSON.parse(originalMessage));
         await this.handleMessage(dto, originalMessage);
@@ -128,6 +126,8 @@ class Consumer {
         });
       }
     });
+
+    return this.handleError(stream);
   }
 
   /**
@@ -139,8 +139,8 @@ class Consumer {
    *
    * @returns {Promise}
    */
-  async initStream() {
-    this.kafkaStream.on('error', err =>
+  async handleError(kafkaStream) {
+    kafkaStream.on('error', err =>
       logger.error('Kafka stream error', { stack: err.stack, tags: [this.type, 'consumer'] }),
     );
     logger.info('Connected to kafka', { tags: [this.type, 'consumer'] });
