@@ -156,7 +156,9 @@ describe('Consumer', () => {
     });
 
     it('should getStream', async () => {
-      const getStream = jest.fn();
+      const getStream = jest.fn(() => ({
+        on: jest.fn(),
+      }));
 
       process.env.EVENT_TOPIC = 'testing';
       const consumer = new Consumer('test', []);
@@ -171,6 +173,9 @@ describe('Consumer', () => {
       let messageCallback = null;
       const getStream = jest.fn((_, cb) => {
         messageCallback = cb;
+        return {
+          on: jest.fn(),
+        };
       });
 
       const consumer = new Consumer('test', []);
@@ -183,48 +188,31 @@ describe('Consumer', () => {
       expect(decode).toHaveBeenCalledTimes(1);
       expect(decode).toHaveBeenCalledWith({});
     });
-  });
 
-  describe('initStream', () => {
-    it('should listen "error"', async () => {
-      const on = jest.fn();
-      const StreamCtor = jest.fn(() => ({ on }));
-      Stream.mockImplementation(StreamCtor);
-
-      const consumer = new Consumer('test', []);
-      await consumer.initStream();
-
-      expect(StreamCtor).toHaveBeenCalledTimes(1);
-      expect(on).toHaveBeenCalledTimes(1);
-      expect(on).toHaveBeenCalledWith('error', expect.any(Function));
-    });
-
-    it('should log an error when "error" is triggered', async () => {
-      let onErrorCallback = null;
-      const on = jest.fn((_, cb) => {
-        onErrorCallback = cb;
+    it('should handle errors ang log it', async () => {
+      let messageCallback = null;
+      const onMock = jest.fn((type, cb) => {
+        if (type === 'error') cb(new Error());
       });
-      const StreamCtor = jest.fn(() => ({ on }));
-      Stream.mockImplementation(StreamCtor);
-      logger.error = jest.fn();
+      const getStream = jest.fn((_, cb) => {
+        messageCallback = cb;
+        return {
+          on: onMock,
+        };
+      });
 
       const consumer = new Consumer('test', []);
-      await consumer.initStream();
+      consumer.kafkaStream = { getStream };
+      await consumer.run();
 
-      expect(StreamCtor).toHaveBeenCalledTimes(1);
-      expect(on).toHaveBeenCalledTimes(1);
-      expect(on).toHaveBeenCalledWith('error', expect.any(Function));
-      expect(typeof onErrorCallback).toBe('function');
-      expect(logger.error).toHaveBeenCalledTimes(0);
-      onErrorCallback({ stack: '123' });
-      expect(logger.error).toHaveBeenCalledTimes(1);
-      expect(logger.error).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          stack: '123',
-          tags: ['test', 'consumer'],
-        }),
-      );
+      expect(onMock).toHaveBeenCalledTimes(1);
+      expect(onMock).toHaveBeenCalledWith('error', expect.any(Function));
+
+      expect(typeof messageCallback).toBe('function');
+
+      messageCallback('{}');
+      expect(decode).toHaveBeenCalledTimes(1);
+      expect(decode).toHaveBeenCalledWith({});
     });
   });
 
