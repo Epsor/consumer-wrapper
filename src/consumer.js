@@ -1,7 +1,7 @@
 import logger from '@epsor/logger';
 import { encode, decode } from '@epsor/dto';
 import Stream from '@epsor/kafka-streams';
-import producer from '@epsor/kafka-producer';
+import Producer from '@epsor/kafka-producer';
 import forEach from 'aigle/forEach';
 import redis from 'redis';
 
@@ -38,12 +38,27 @@ class Consumer {
    * @param {String} type - The consumer type, used for logger, stream groupId, redis PSUBSCRIBE and mongoDb database's name
    * @param {Array.<AbstractHandler>} handlers - The handlers
    * @param {Object<String,Object>} dependencies - The consumer dependencies
+   * @param {Object} credentials - The credentials needed for Kafka
+   * @param {String|undefined} credentials.kafkaHost - Kafka Host domain
+   * @param {String|undefined} credentials.kafkaUsername - Kafka API key
+   * @param {String|undefined} credentials.kafkaPassword - Kafka API secret
    */
-  constructor(type, handlers, dependencies = {}) {
+  constructor(type, handlers, dependencies = {}, credentials = {}) {
     this.type = type;
     this.handlers = handlers.reduce(handlerReducer, {});
     this.dependencies = dependencies;
-    this.kafkaStream = new Stream({ groupId: type });
+    const { kafkaHost, kafkaUsername, kafkaPassword } = credentials;
+    this.kafkaStream = new Stream({
+      kafkaHost,
+      apiKey: kafkaUsername,
+      apiSecret: kafkaPassword,
+      groupId: type,
+    });
+    this.kafkaProducer = new Producer({
+      kafkaHost,
+      apiKey: kafkaUsername,
+      apiSecret: kafkaPassword,
+    });
   }
 
   /**
@@ -107,7 +122,7 @@ class Consumer {
       encodedDto,
     });
 
-    return producer.produce(kafkaMessage, 'errors');
+    return this.kafkaProducer.produce(kafkaMessage, 'errors');
   }
 
   /**
