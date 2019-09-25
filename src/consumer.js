@@ -42,13 +42,15 @@ class Consumer {
    * @param {String|undefined} credentials.kafkaHost - Kafka Host domain
    * @param {String|undefined} credentials.kafkaUsername - Kafka API key
    * @param {String|undefined} credentials.kafkaPassword - Kafka API secret
+   * @param {Object} options - Options from library use to consume messages from Kafka
    */
-  constructor(type, handlers, dependencies = {}, credentials = {}) {
+  constructor(type, handlers, dependencies = {}, credentials = {}, options = {}) {
     this.type = type;
     this.handlers = handlers.reduce(handlerReducer, {});
     this.dependencies = dependencies;
     const { kafkaHost, kafkaUsername, kafkaPassword } = credentials;
     this.kafkaStream = new Stream({
+      ...options,
       kafkaHost,
       apiKey: kafkaUsername,
       apiSecret: kafkaPassword,
