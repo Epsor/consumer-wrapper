@@ -129,9 +129,10 @@ class Consumer {
 
   /**
    * Launch the message consumtion
+   * @param {String|String[]} topic Topic(s) to listen
    */
-  run() {
-    const stream = this.kafkaStream.getStream(process.env.EVENT_TOPIC, async originalMessage => {
+  run(topic = process.env.EVENT_TOPIC) {
+    const stream = this.kafkaStream.getStream(topic, async originalMessage => {
       try {
         const dto = decode(JSON.parse(originalMessage));
         await this.handleMessage(dto, originalMessage);
