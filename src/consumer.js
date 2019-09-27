@@ -57,6 +57,7 @@ class Consumer {
     this.kafkaUsername = kafkaUsername;
     this.kafkaPassword = kafkaPassword;
 
+    /* istanbul ignore next */
     const kafkaConfig =
       this.kafkaUsername && this.kafkaPassword
         ? {
@@ -147,15 +148,16 @@ class Consumer {
     return this.kafkaProducer.produce(kafkaMessage, 'errors');
   }
 
+  /* istanbul ignore next */
   async run(messagesPerConsumption = 1) {
     await this.connect();
     await this.consume(messagesPerConsumption);
   }
 
+  /* istanbul ignore next */
   connect() {
     return new Promise((resolve, reject) => {
       // Connect to the broker manually
-      this.kafkaConsumer.connect();
       logger.info('Connected to kafka', { tags: [this.type, 'consumer'] });
       this.kafkaConsumer
         .on('ready', () => {
@@ -172,9 +174,11 @@ class Consumer {
           });
           return reject();
         });
+      this.kafkaConsumer.connect();
     });
   }
 
+  /* istanbul ignore next */
   consume(number) {
     return new Promise((resolve, reject) => {
       this.kafkaConsumer.consume(number, async (error, messages) => {
@@ -195,8 +199,7 @@ class Consumer {
           }
         });
 
-        resolve();
-        return this.consume(number);
+        return resolve(this.consume(number));
       });
     });
   }
