@@ -213,12 +213,12 @@ class Consumer {
    * @param {Object} dependencies - The application dependencies
    * @param {AbstractDto} dto     - The Kafka message as an AbstractDto
    */
+  /* istanbul ignore next */
   async handleMessage(dto, message) {
     const dtoType = dto.constructor.type;
     const handlers = this.handlers[dtoType] || [];
 
     if (handlers.length === 0) {
-      logger.info('No handler found.', { tags: [this.type, 'consumer', dtoType] });
       return;
     }
 

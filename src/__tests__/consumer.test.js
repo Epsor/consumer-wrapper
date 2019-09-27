@@ -162,21 +162,6 @@ describe('Consumer', () => {
       logger.error.mockReset();
     });
 
-    it('should log if no handler available', async () => {
-      const dto = new (class {
-        static get type() {
-          return 'test';
-        }
-      })();
-
-      const consumer = new Consumer('test', []);
-      await consumer.handleMessage(dto, 'coucou');
-      expect(logger.info).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith('No handler found.', {
-        tags: ['test', 'consumer', 'test'],
-      });
-    });
-
     it('should handle & publish on a validDto', async () => {
       const handler = { type: 'A', allowedTypes: ['test'], handle: jest.fn() };
       const publish = jest.fn();
