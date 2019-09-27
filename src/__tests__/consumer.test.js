@@ -1,5 +1,5 @@
 import logger from '@epsor/logger';
-import { encode, decode } from '@epsor/dto';
+import { encode } from '@epsor/dto';
 import redis from 'redis';
 
 import mongo from '../mongoDb';
@@ -116,6 +116,23 @@ describe('Consumer', () => {
     });
   });
 
+  describe('consume', () => {
+    it('should handle consume errors', async () => {
+      const consumer = new Consumer('test', []);
+      await consumer.connect();
+      consumer.kafkaConsumer = {
+        consume: jest.fn((number, callback) => {
+          callback(new Error('error'));
+        }),
+      };
+      try {
+        await consumer.consume(1);
+      } catch (e) {
+        expect(consumer.kafkaConsumer.consume).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
   describe('publishError', () => {
     afterEach(() => {
       encode.mockReset();
@@ -136,46 +153,6 @@ describe('Consumer', () => {
           encodedDto: 'DtoString',
         }),
       );
-    });
-  });
-
-  describe('run', () => {
-    afterEach(() => {
-      decode.mockReset();
-    });
-
-    it('should decode a message', async () => {
-      const consumer = new Consumer('test', []);
-      await consumer.run();
-
-      expect(decode).toHaveBeenCalledTimes(1);
-      expect(decode).toHaveBeenCalledWith({});
-    });
-
-    it('should handle errors ang log it', async () => {
-      let messageCallback = null;
-      const onMock = jest.fn((type, cb) => {
-        if (type === 'error') cb(new Error());
-      });
-      const getStream = jest.fn((_, cb) => {
-        messageCallback = cb;
-        return {
-          on: onMock,
-        };
-      });
-
-      const consumer = new Consumer('test', []);
-      consumer.kafkaConsumer = { getStream };
-      await consumer.run();
-
-      expect(onMock).toHaveBeenCalledTimes(1);
-      expect(onMock).toHaveBeenCalledWith('error', expect.any(Function));
-
-      expect(typeof messageCallback).toBe('function');
-
-      messageCallback('{}');
-      expect(decode).toHaveBeenCalledTimes(1);
-      expect(decode).toHaveBeenCalledWith({});
     });
   });
 
