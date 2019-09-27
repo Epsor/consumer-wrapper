@@ -1,9 +1,10 @@
-import logger from '@epsor/logger';
-import { encode, decode } from '@epsor/dto';
-import Stream from '@epsor/kafka-streams';
-import Producer from '@epsor/kafka-producer';
+import { KafkaConsumer } from 'node-rdkafka';
+import eachSeries from 'aigle/eachSeries';
 import forEach from 'aigle/forEach';
 import redis from 'redis';
+import logger from '@epsor/logger';
+import { encode, decode } from '@epsor/dto';
+import Producer from '@epsor/kafka-producer';
 
 import mongo from './mongoDb';
 
@@ -25,12 +26,6 @@ const handlerReducer = (accu, handler) => {
   );
 };
 
-/**
- * @property {Stream} kafkaStream - The kafka stream
- * @property {String} type - The consumer type
- * @property {Object<String,AbstractHandler[]>} handlers - Handlers
- * @property {Object<String,Object>} depencies - Consumer's dependencies
- */
 class Consumer {
   /**
    * Contruct a consumer.
@@ -44,18 +39,43 @@ class Consumer {
    * @param {String|undefined} credentials.kafkaPassword - Kafka API secret
    * @param {Object} options - Options from library use to consume messages from Kafka
    */
-  constructor(type, handlers, dependencies = {}, credentials = {}, options = {}) {
+
+  constructor(
+    type,
+    handlers,
+    dependencies = {},
+    {
+      kafkaHost = process.env.KAFKA_HOST,
+      kafkaUsername = process.env.KAFKA_USERNAME,
+      kafkaPassword = process.env.KAFKA_PASSWORD,
+    } = {},
+  ) {
     this.type = type;
     this.handlers = handlers.reduce(handlerReducer, {});
     this.dependencies = dependencies;
-    const { kafkaHost, kafkaUsername, kafkaPassword } = credentials;
-    this.kafkaStream = new Stream({
-      ...options,
-      kafkaHost,
-      apiKey: kafkaUsername,
-      apiSecret: kafkaPassword,
-      groupId: type,
-    });
+    this.kafkaHost = kafkaHost;
+    this.kafkaUsername = kafkaUsername;
+    this.kafkaPassword = kafkaPassword;
+
+    const kafkaConfig =
+      this.kafkaUsername && this.kafkaPassword
+        ? {
+            'security.protocol': 'SASL_SSL',
+            'ssl.ca.location': '/etc/ssl/certs',
+            'sasl.mechanisms': 'PLAIN',
+            'log.connection.close': false,
+            'sasl.username': this.kafkaUsername,
+            'sasl.password': this.kafkaPassword,
+          }
+        : {};
+    this.kafkaConsumer = new KafkaConsumer(
+      {
+        'group.id': this.type,
+        'metadata.broker.list': this.kafkaHost,
+        ...kafkaConfig,
+      },
+      {},
+    );
     this.kafkaProducer = new Producer({
       kafkaHost,
       apiKey: kafkaUsername,
@@ -127,43 +147,58 @@ class Consumer {
     return this.kafkaProducer.produce(kafkaMessage, 'errors');
   }
 
-  /**
-   * Launch the message consumtion
-   * @param {String|String[]} topic Topic(s) to listen
-   */
-  run(topic = process.env.EVENT_TOPIC) {
-    const stream = this.kafkaStream.getStream(topic, async originalMessage => {
-      try {
-        const dto = decode(JSON.parse(originalMessage));
-        await this.handleMessage(dto, originalMessage);
-      } catch (err) {
-        await this.publishError(err, originalMessage);
-        logger.error(err.message, {
-          stack: err.stack,
-          tags: [this.type, 'consumer'],
-        });
-      }
-    });
-
-    return this.handleError(stream);
+  async run(messagesPerConsumption = 1) {
+    await this.connect();
+    await this.consume(messagesPerConsumption);
   }
 
-  /**
-   * @private
-   *
-   * Init kafka stream for message consumption
-   *
-   * @async
-   *
-   * @returns {Promise}
-   */
-  async handleError(kafkaStream) {
-    kafkaStream.on('error', err =>
-      logger.error('Kafka stream error', { stack: err.stack, tags: [this.type, 'consumer'] }),
-    );
-    logger.info('Connected to kafka', { tags: [this.type, 'consumer'] });
+  connect() {
+    return new Promise((resolve, reject) => {
+      // Connect to the broker manually
+      this.kafkaConsumer.connect();
+      logger.info('Connected to kafka', { tags: [this.type, 'consumer'] });
+      this.kafkaConsumer
+        .on('ready', () => {
+          this.kafkaConsumer.subscribe([process.env.EVENT_TOPIC]);
+          logger.info('Ready to consume', {
+            tags: [this.type, 'consumer', process.env.EVENT_TOPIC],
+          });
+          return resolve();
+        })
+        .on('error', err => {
+          logger.error(err.message, {
+            stack: err.stack,
+            tags: [this.type, 'consumer'],
+          });
+          return reject();
+        });
+    });
+  }
 
-    return this.kafkaStream;
+  consume(number) {
+    return new Promise((resolve, reject) => {
+      this.kafkaConsumer.consume(number, async (error, messages) => {
+        if (error) {
+          return reject(error);
+        }
+        await eachSeries(messages, async message => {
+          try {
+            const data = message.value.toString();
+            const dto = decode(JSON.parse(data));
+            await this.handleMessage(dto, data);
+          } catch (err) {
+            await this.publishError(err, message);
+            logger.error(err.message, {
+              stack: err.stack,
+              tags: [this.type, 'consumer'],
+            });
+          }
+        });
+
+        resolve();
+        return this.consume(number);
+      });
+    });
   }
 
   /**
@@ -175,7 +210,7 @@ class Consumer {
    * @param {Object} dependencies - The application dependencies
    * @param {AbstractDto} dto     - The Kafka message as an AbstractDto
    */
-  async handleMessage(dto, originalMessage) {
+  async handleMessage(dto, message) {
     const dtoType = dto.constructor.type;
     const handlers = this.handlers[dtoType] || [];
 
@@ -188,7 +223,7 @@ class Consumer {
       try {
         await handler.handle(this.dependencies, dto);
         if (this.dependencies.redis) {
-          await this.dependencies.redis.publish(`${this.type}:${dtoType}`, originalMessage);
+          await this.dependencies.redis.publish(`${this.type}:${dtoType}`, message);
         }
       } catch (err) {
         logger.error('Cannot handle DTO', {
