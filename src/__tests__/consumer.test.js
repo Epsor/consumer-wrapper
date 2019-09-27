@@ -1,7 +1,6 @@
 import logger from '@epsor/logger';
-import { encode, decode } from '@epsor/dto';
+import { encode } from '@epsor/dto';
 import redis from 'redis';
-import Stream from '@epsor/kafka-streams';
 
 import mongo from '../mongoDb';
 import Consumer from '../consumer';
@@ -40,16 +39,6 @@ describe('Consumer', () => {
         '3': [A, B, C],
         '4': [D],
       });
-    });
-
-    it('should create a new kafka-stream', () => {
-      const StreamCtor = jest.fn(() => ({
-        on: jest.fn(),
-      }));
-      Stream.mockImplementation(StreamCtor);
-
-      expect(new Consumer('test', [])).toBeTruthy();
-      expect(StreamCtor).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -127,6 +116,23 @@ describe('Consumer', () => {
     });
   });
 
+  describe('consume', () => {
+    it('should handle consume errors', async () => {
+      const consumer = new Consumer('test', []);
+      await consumer.connect();
+      consumer.kafkaConsumer = {
+        consume: jest.fn((number, callback) => {
+          callback(new Error('error'));
+        }),
+      };
+      try {
+        await consumer.consume(1);
+      } catch (e) {
+        expect(consumer.kafkaConsumer.consume).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
+
   describe('publishError', () => {
     afterEach(() => {
       encode.mockReset();
@@ -150,91 +156,10 @@ describe('Consumer', () => {
     });
   });
 
-  describe('run', () => {
-    afterEach(() => {
-      decode.mockReset();
-    });
-
-    it('should getStream', async () => {
-      const getStream = jest.fn(() => ({
-        on: jest.fn(),
-      }));
-
-      process.env.EVENT_TOPIC = 'testing';
-      const consumer = new Consumer('test', []);
-      consumer.kafkaStream = { getStream };
-      await consumer.run();
-
-      expect(getStream).toHaveBeenCalledTimes(1);
-      expect(getStream).toHaveBeenCalledWith('testing', expect.any(Function));
-    });
-
-    it('should decode a message', async () => {
-      let messageCallback = null;
-      const getStream = jest.fn((_, cb) => {
-        messageCallback = cb;
-        return {
-          on: jest.fn(),
-        };
-      });
-
-      const consumer = new Consumer('test', []);
-      consumer.kafkaStream = { getStream };
-      await consumer.run();
-
-      expect(typeof messageCallback).toBe('function');
-
-      messageCallback('{}');
-      expect(decode).toHaveBeenCalledTimes(1);
-      expect(decode).toHaveBeenCalledWith({});
-    });
-
-    it('should handle errors ang log it', async () => {
-      let messageCallback = null;
-      const onMock = jest.fn((type, cb) => {
-        if (type === 'error') cb(new Error());
-      });
-      const getStream = jest.fn((_, cb) => {
-        messageCallback = cb;
-        return {
-          on: onMock,
-        };
-      });
-
-      const consumer = new Consumer('test', []);
-      consumer.kafkaStream = { getStream };
-      await consumer.run();
-
-      expect(onMock).toHaveBeenCalledTimes(1);
-      expect(onMock).toHaveBeenCalledWith('error', expect.any(Function));
-
-      expect(typeof messageCallback).toBe('function');
-
-      messageCallback('{}');
-      expect(decode).toHaveBeenCalledTimes(1);
-      expect(decode).toHaveBeenCalledWith({});
-    });
-  });
-
   describe('handleMessage', () => {
     beforeEach(() => {
       logger.info.mockReset();
       logger.error.mockReset();
-    });
-
-    it('should log if no handler available', async () => {
-      const dto = new (class {
-        static get type() {
-          return 'test';
-        }
-      })();
-
-      const consumer = new Consumer('test', []);
-      await consumer.handleMessage(dto, 'coucou');
-      expect(logger.info).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith('No handler found.', {
-        tags: ['test', 'consumer', 'test'],
-      });
     });
 
     it('should handle & publish on a validDto', async () => {
