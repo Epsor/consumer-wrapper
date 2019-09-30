@@ -149,7 +149,7 @@ class Consumer {
   }
 
   /* istanbul ignore next */
-  async run({ topics = process.env.EVENT_TOPIC, messagesPerConsumption = 1 }) {
+  async run({ topics = [process.env.EVENT_TOPIC], messagesPerConsumption = 1 }) {
     await this.connect(topics);
     await this.consume(messagesPerConsumption);
   }
