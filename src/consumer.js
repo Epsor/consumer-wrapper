@@ -149,21 +149,22 @@ class Consumer {
   }
 
   /* istanbul ignore next */
-  async run(messagesPerConsumption = 1) {
-    await this.connect();
+  async run({ topics = process.env.EVENT_TOPIC, messagesPerConsumption = 1 }) {
+    await this.connect(topics);
     await this.consume(messagesPerConsumption);
   }
 
   /* istanbul ignore next */
-  connect() {
+  connect(topics) {
     return new Promise((resolve, reject) => {
       // Connect to the broker manually
       logger.info('Connected to kafka', { tags: [this.type, 'consumer'] });
       this.kafkaConsumer
         .on('ready', () => {
-          this.kafkaConsumer.subscribe([process.env.EVENT_TOPIC]);
+          this.kafkaConsumer.subscribe(topics);
           logger.info('Ready to consume', {
-            tags: [this.type, 'consumer', process.env.EVENT_TOPIC],
+            tags: [this.type, 'consumer'],
+            topics,
           });
           return resolve();
         })
