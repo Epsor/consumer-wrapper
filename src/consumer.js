@@ -157,12 +157,10 @@ class Consumer {
   /* istanbul ignore next */
   connect(topics) {
     return new Promise((resolve, reject) => {
-      // Connect to the broker manually
-      logger.info('Connected to kafka', { tags: [this.type, 'consumer'] });
       this.kafkaConsumer
         .on('ready', () => {
           this.kafkaConsumer.subscribe(topics);
-          logger.info('Ready to consume', {
+          logger.info('Connected and ready to consume', {
             tags: [this.type, 'consumer'],
             topics,
           });
@@ -175,6 +173,8 @@ class Consumer {
           });
           return reject();
         });
+      // Connect to the broker manually
+      logger.info('Connecting to kafka...', { tags: [this.type, 'consumer'] });
       this.kafkaConsumer.connect();
     });
   }
