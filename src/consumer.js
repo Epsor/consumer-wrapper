@@ -75,7 +75,9 @@ class Consumer {
         'metadata.broker.list': this.kafkaHost,
         ...kafkaConfig,
       },
-      {},
+      {
+        'auto.offset.reset': 'earliest',
+      },
     );
     this.kafkaProducer = new Producer({
       kafkaHost,
