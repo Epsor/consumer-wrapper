@@ -73,6 +73,7 @@ class Consumer {
       {
         'group.id': this.type,
         'metadata.broker.list': this.kafkaHost,
+        'enable.auto.commit': false,
         ...kafkaConfig,
       },
       {
@@ -150,12 +151,28 @@ class Consumer {
     return this.kafkaProducer.produce(kafkaMessage, 'errors');
   }
 
+  /**
+   * Connect to Kafka and start consuming messages
+   *
+   * @param {Object} config                        - config to setup consumer
+   * @param {Object} config.topics                 - topics to subscribe
+   * @param {Object} config.messagesPerConsumption - Number of message to consume per cycle
+   *
+   * @return {Promise}
+   */
   /* istanbul ignore next */
-  async run({ topics = [process.env.EVENT_TOPIC], messagesPerConsumption = 1 }) {
+  async run({ topics = [process.env.EVENT_TOPIC], messagesPerConsumption = 1 } = {}) {
     await this.connect(topics);
     await this.consume(messagesPerConsumption);
   }
 
+  /**
+   * Connect to Kafka and subscribe to topics
+   *
+   * @param {Array<String>} topics - topics to subscribe
+   *
+   * @returns {Promise}
+   */
   /* istanbul ignore next */
   connect(topics) {
     return new Promise((resolve, reject) => {
@@ -181,6 +198,14 @@ class Consumer {
     });
   }
 
+  /**
+   * Consume messages from kafka and handle them
+   * then it call itsefl again to keep consuming
+   *
+   * @param {Number} number - batch of message to consume
+   *
+   * @return {Promise}
+   */
   /* istanbul ignore next */
   consume(number) {
     return new Promise((resolve, reject) => {
@@ -189,15 +214,36 @@ class Consumer {
           return reject(error);
         }
         await eachSeries(messages, async message => {
+          const data = message.value.toString();
+
           try {
-            const data = message.value.toString();
             const dto = decode(JSON.parse(data));
+            const dtoType = dto.constructor.type;
+
+            logger.info(`Handling message with offset ${message.offset}...`, {
+              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+              data,
+            });
             await this.handleMessage(dto, data);
+            logger.info(`Message handled. Committing offset ${message.offset} to Kafka...`, {
+              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+              data,
+            });
+            this.kafkaConsumer.commitMessageSync(message);
+            logger.info(`Offset ${message.offset} committed to Kafka...`, {
+              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+              data,
+            });
+
+            if (this.dependencies.redis) {
+              await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
+            }
           } catch (err) {
             await this.publishError(err, message);
             logger.error(err.message, {
               stack: err.stack,
               tags: [this.type, 'consumer'],
+              data,
             });
           }
         });
@@ -213,8 +259,10 @@ class Consumer {
    * Resolver  DTO -> handler(s). It's called one time for each kafka message.
    *
    * @async
-   * @param {Object} dependencies - The application dependencies
-   * @param {AbstractDto} dto     - The Kafka message as an AbstractDto
+   * @param {AbstractDto} dto - The Kafka message as an AbstractDto
+   * @param {Object} message  - message from Kafka
+   *
+   * @return {Promise}
    */
   /* istanbul ignore next */
   async handleMessage(dto, message) {
@@ -228,14 +276,12 @@ class Consumer {
     await forEach(handlers, async handler => {
       try {
         await handler.handle(this.dependencies, dto);
-        if (this.dependencies.redis) {
-          await this.dependencies.redis.publish(`${this.type}:${dtoType}`, message);
-        }
       } catch (err) {
         logger.error('Cannot handle DTO', {
-          tags: [this.type, 'consumer', dto.type, handler.constructor.handlerName],
+          tags: [this.type, 'consumer', dtoType, handler.constructor.handlerName],
           stack: err.stack,
-          type: dto.type,
+          type: dtoType,
+          data: message.value.toString(),
         });
       }
     });

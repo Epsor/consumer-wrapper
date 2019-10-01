@@ -177,10 +177,9 @@ describe('Consumer', () => {
 
       const consumer = new Consumer('test', [handler], dependencies);
 
-      await consumer.handleMessage(dto, 'coucou');
+      await consumer.handleMessage(dto, { value: 'coucou' });
       expect(handler.handle).toHaveBeenCalledTimes(1);
       expect(handler.handle).toHaveBeenCalledWith(dependencies, dto);
-      expect(publish).toHaveBeenCalledWith('test:test', 'coucou');
     });
 
     it('should not log error witout redis', async () => {
@@ -197,7 +196,7 @@ describe('Consumer', () => {
       const consumer = new Consumer('test', [handler], dependencies);
       consumer.initDependencies({ redis: false, mongo: false });
 
-      await consumer.handleMessage(dto, 'coucou');
+      await consumer.handleMessage(dto, { value: 'coucou' });
       expect(logger.error).toHaveBeenCalledTimes(0);
     });
 
@@ -219,7 +218,7 @@ describe('Consumer', () => {
       expect(logger.error).toHaveBeenCalledTimes(0);
 
       const consumer = new Consumer('test', [handler]);
-      await consumer.handleMessage(dto, 'coucou');
+      await consumer.handleMessage(dto, { value: 'coucou' });
 
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
