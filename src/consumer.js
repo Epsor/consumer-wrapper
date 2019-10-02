@@ -260,12 +260,12 @@ class Consumer {
    *
    * @async
    * @param {AbstractDto} dto - The Kafka message as an AbstractDto
-   * @param {Object} message  - message from Kafka
+   * @param {Object} data  - data from from Kafka message
    *
    * @return {Promise}
    */
   /* istanbul ignore next */
-  async handleMessage(dto, message) {
+  async handleMessage(dto, data) {
     const dtoType = dto.constructor.type;
     const handlers = this.handlers[dtoType] || [];
 
@@ -281,7 +281,7 @@ class Consumer {
           tags: [this.type, 'consumer', dtoType, handler.constructor.handlerName],
           stack: err.stack,
           type: dtoType,
-          data: message.value.toString(),
+          data,
         });
       }
     });
