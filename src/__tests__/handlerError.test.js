@@ -12,6 +12,7 @@ describe('handlerError', () => {
   describe('setHandlerName', () => {
     it('should set HanlderName', () => {
       const error = new HandlerError();
+
       error.setHandlerName('coucou');
 
       expect(error.handlerName).toBe('coucou');

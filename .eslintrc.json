@@ -1,6 +1,10 @@
 {
-  "parser": "babel-eslint",
-  "extends": ["airbnb", "plugin:prettier/recommended"],
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "airbnb",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended"
+  ],
   "env": {
     "browser": true,
     "node": true,
@@ -8,12 +12,14 @@
     "jest": true
   },
   "rules": {
-    "class-methods-use-this": "warn",
-    "radix": "off",
+    "prettier/prettier": ["error"],
+    "class-methods-use-this": "error",
+    "radix": ["error", "as-needed"],
     "no-shadow": "warn",
     "no-nested-ternary": "warn",
     "func-names": "off",
-    "import/no-unresolved": ["error", { "ignore": ["^react"] }],
+    "import/no-unresolved": ["off"],
+    "no-underscore-dangle": ["off"],
     "import/no-extraneous-dependencies": [
       "error",
       {
@@ -34,20 +40,36 @@
       }
     ],
     "import/prefer-default-export": ["off"],
+    "padding-line-between-statements": [
+      "error",
+      { "blankLine": "always", "prev": "var", "next": "return" },
+      { "blankLine": "always", "prev": ["const", "let", "var"], "next": "*" },
+      { "blankLine": "any", "prev": ["const", "let", "var"], "next": ["const", "let", "var"] }
+    ],
+    "no-else-return": ["error", { "allowElseIf": false }],
     "jsx-a11y/label-has-for": ["off"],
     "jsx-a11y/label-has-associated-control": ["off"],
     "jsx-a11y/anchor-is-valid": [0],
     "jsx-a11y/no-static-element-interactions": ["off"],
     "jsx-a11y/click-events-have-key-events": ["off"],
     "jsx-a11y/mouse-events-have-key-events": ["off"],
-    "react/no-array-index-key": ["off"],
-    "react/jsx-one-expression-per-line": ["off"],
-    "react/jsx-filename-extension": [2, { "extensions": [".js"] }],
-    "react/sort-prop-types": [2, { "sortShapeProp": true }],
-    "react/jsx-sort-props": [2, { "ignoreCase": true }],
-    "react/jsx-max-props-per-line": [2, { "maximum": 1, "when": "multiline" }],
-    "react/jsx-wrap-multilines": [0],
-    "react/no-did-update-set-state": [0],
-    "react/style-prop-object": ["off"]
-  }
+    "no-useless-constructor": "off",
+    "@typescript-eslint/no-useless-constructor": "error"
+  },
+  "overrides": [
+    {
+      "files": ["*.js", "*.jsx"],
+      "parser": "babel-eslint",
+      "rules": {
+        "@typescript-eslint/explicit-function-return-type": ["off"],
+        "@typescript-eslint/no-unused-vars": ["off"],
+        "@typescript-eslint/no-var-requires": ["off"],
+        "@typescript-eslint/camelcase": ["off"],
+        "@typescript-eslint/class-name-casing": ["off"],
+        "@typescript-eslint/no-empty-function": ["off"],
+        "import/prefer-default-export": ["error", { "includeExports": true }],
+        "import/no-unresolved": ["error"]
+      }
+    }
+  ]
 }
