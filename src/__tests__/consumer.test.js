@@ -13,16 +13,19 @@ describe('Consumer', () => {
 
     it('should initialize Consumer.type', () => {
       const consumer = new Consumer('test', []);
+
       expect(consumer.type).toBe('test');
     });
 
     it('should initialize Consumer.dependencies to a default value', () => {
       const consumer = new Consumer('test', []);
+
       expect(consumer.dependencies).toEqual(expect.any(Object));
     });
 
     it('should initialize Consumer.dependencies if given', () => {
       const consumer = new Consumer('test', [], { a: 123 });
+
       expect(consumer.dependencies).toEqual({ a: 123 });
     });
 
@@ -33,6 +36,7 @@ describe('Consumer', () => {
       const D = { type: 'D', allowedTypes: ['4'] };
 
       const consumer = new Consumer('test', [A, B, C, D]);
+
       expect(consumer.handlers).toEqual({
         '1': [A],
         '2': [A, B],
@@ -45,6 +49,7 @@ describe('Consumer', () => {
   describe('initDependencies', () => {
     it('should connect to mongoDb by default', async () => {
       const consumer = new Consumer('test', []);
+
       mongo.connect = jest.fn();
       await consumer.initDependencies();
       expect(mongo.connect).toHaveBeenCalledTimes(1);
@@ -52,6 +57,7 @@ describe('Consumer', () => {
 
     it('should not connect to mongoDb if mongo = false', async () => {
       const consumer = new Consumer('test', []);
+
       await consumer.initDependencies({ mongo: false });
 
       expect(mongo.connected).toBe(false);
@@ -59,9 +65,11 @@ describe('Consumer', () => {
 
     it('should connect to redis by default', async () => {
       const pub = jest.fn();
+
       redis.createClient = jest.fn(() => ({ pub }));
 
       const consumer = new Consumer('test', []);
+
       await consumer.initDependencies({ mongo: false });
 
       expect(redis.createClient).toHaveBeenCalledTimes(1);
@@ -69,9 +77,11 @@ describe('Consumer', () => {
 
     it('should not connect to redis if redis = false', async () => {
       const pub = jest.fn();
+
       redis.createClient = jest.fn(() => ({ pub }));
 
       const consumer = new Consumer('test', []);
+
       await consumer.initDependencies({ mongo: false, redis: false });
 
       expect(redis.createClient).toHaveBeenCalledTimes(0);
@@ -81,6 +91,7 @@ describe('Consumer', () => {
   describe('createCollections', () => {
     it('should throw if mongo dependencie is not set', async () => {
       const consumer = new Consumer('test', []);
+
       await expect(consumer.createCollections()).rejects.toThrow();
     });
 
@@ -91,6 +102,7 @@ describe('Consumer', () => {
       };
 
       const consumer = new Consumer('test', [], { mongo: mongoMock });
+
       await consumer.createCollections('a', 'b', 'c');
 
       expect(mongoMock.collections).toHaveBeenCalledTimes(1);
@@ -107,6 +119,7 @@ describe('Consumer', () => {
       expect(dbMock.createCollection).toHaveBeenCalledTimes(0);
 
       const consumer = new Consumer('test', [], { mongo: dbMock });
+
       await consumer.createCollections('a', 'b', 'c');
 
       expect(dbMock.collections).toHaveBeenCalledTimes(1);
@@ -119,6 +132,7 @@ describe('Consumer', () => {
   describe('consume', () => {
     it('should handle consume errors', async () => {
       const consumer = new Consumer('test', []);
+
       await consumer.connect();
       consumer.kafkaConsumer = {
         consume: jest.fn((number, callback) => {
@@ -142,6 +156,7 @@ describe('Consumer', () => {
       const error = new Error('My message.');
 
       const consumer = new Consumer('test', []);
+
       await consumer.publishError(error, 'DtoString');
 
       expect(encode).toHaveBeenCalledTimes(1);
@@ -194,6 +209,7 @@ describe('Consumer', () => {
       })();
 
       const consumer = new Consumer('test', [handler], dependencies);
+
       consumer.initDependencies({ redis: false, mongo: false });
 
       await consumer.handleMessage(dto, { value: 'coucou' });
@@ -218,6 +234,7 @@ describe('Consumer', () => {
       expect(logger.error).toHaveBeenCalledTimes(0);
 
       const consumer = new Consumer('test', [handler]);
+
       await consumer.handleMessage(dto, { value: 'coucou' });
 
       expect(logger.error).toHaveBeenCalledTimes(1);

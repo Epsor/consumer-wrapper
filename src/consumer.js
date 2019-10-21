@@ -69,6 +69,7 @@ class Consumer {
             'sasl.password': this.kafkaPassword,
           }
         : {};
+
     this.kafkaConsumer = new KafkaConsumer(
       {
         'group.id': this.type,
@@ -100,11 +101,13 @@ class Consumer {
   async initDependencies({ mongo: withMongo = true, redis: withRedis = true } = {}) {
     if (withMongo === true) {
       const mongoDbUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
+
       this.dependencies.mongo = await mongo.connect(mongoDbUrl, this.type);
     }
 
     if (withRedis === true) {
       const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+
       this.dependencies.redis = await redis.createClient({ url: redisUrl });
     }
   }
