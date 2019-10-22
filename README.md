@@ -63,3 +63,16 @@ import handlers from './handlers';
   await consumer.run();
 })();
 ```
+
+## Health check
+
+This package contains an express api endpoint to check pod's health.
+
+##### How to
+
+- `npm start` to start the server.
+- go to `http://localhost:{PORT}/.well-known/express/server-health`. Default port is `8000`
+
+please look at the README.md of **epsor-v2** to get the list of supported ports for every consumers.
+
+
