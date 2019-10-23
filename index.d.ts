@@ -1,5 +1,7 @@
+import Mongo from '@epsor/mongodb-wrapper';
+
 export interface Dependencies {
-  mongo?: object;
+  mongo?: Mongo;
   redis?: object;
 }
 
