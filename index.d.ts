@@ -25,7 +25,7 @@ export class Consumer {
     },
   );
 
-  initDependencies(dependencies?: { withRedis?: boolean; withMongo?: boolean }): Promise<void>;
+  initDependencies(dependencies?: { redis?: boolean; mongo?: boolean }): Promise<void>;
 
   run(options: { topics?: string[]; messagesPerConsumption?: number }): Promise<void>;
 }

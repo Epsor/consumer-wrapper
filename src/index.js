@@ -6,7 +6,7 @@ const PORT = process.env.HEALTHCHECK_PORT || 8000;
 
 (async () => {
   await app.listen(PORT, () => {
-    logger.info(`consumer-wrapper listening at port ${PORT}`);
+    logger.info(`consumer-wrapper listening`, { port: PORT, tags: ['consumer', 'health-check'] });
   });
 })();
 
