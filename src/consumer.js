@@ -3,8 +3,7 @@ import eachSeries from 'aigle/eachSeries';
 import forEach from 'aigle/forEach';
 import redis from 'redis';
 import logger from '@epsor/logger';
-import { encode, decode } from '@epsor/dto';
-import Producer from '@epsor/kafka-producer';
+import { decode } from '@epsor/dto';
 
 import mongo from './mongoDb';
 
@@ -81,11 +80,6 @@ class Consumer {
         'auto.offset.reset': 'earliest',
       },
     );
-    this.kafkaProducer = new Producer({
-      kafkaHost,
-      apiKey: kafkaUsername,
-      apiSecret: kafkaPassword,
-    });
   }
 
   /**
@@ -134,27 +128,6 @@ class Consumer {
   }
 
   /**
-   * Publish an error to a queue dedicated to.
-   *
-   * @async
-   * @param {HandlerError|Error} error - The original error
-   * @param {AbstractDto} encodedDto   - The message that caused the error
-   *
-   * @return {Promise}
-   */
-  publishError({ message, stack, handlerName }, encodedDto) {
-    const kafkaMessage = encode('error', {
-      consumer: this.type,
-      message,
-      handlerName,
-      stack,
-      encodedDto,
-    });
-
-    return this.kafkaProducer.produce(kafkaMessage, 'errors');
-  }
-
-  /**
    * Connect to Kafka and start consuming messages
    *
    * @param {Object} config                        - config to setup consumer
@@ -189,11 +162,12 @@ class Consumer {
           return resolve();
         })
         .on('error', err => {
-          logger.error(err.message, {
+          logger.error('Kafka connection error', {
             stack: err.stack,
             tags: [this.type, 'consumer'],
+            message: err.message,
           });
-          return reject();
+          return reject(err);
         });
       // Connect to the broker manually
       logger.info('Connecting to kafka...', { tags: [this.type, 'consumer'] });
@@ -219,35 +193,26 @@ class Consumer {
         await eachSeries(messages, async message => {
           const data = message.value.toString();
 
-          try {
-            const dto = decode(JSON.parse(data));
-            const dtoType = dto.constructor.type;
+          const dto = decode(JSON.parse(data));
+          const dtoType = dto.constructor.type;
 
-            logger.info(`Handling message with offset ${message.offset}...`, {
-              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-              data,
-            });
-            await this.handleMessage(dto, data);
-            logger.info(`Message handled. Committing offset ${message.offset} to Kafka...`, {
-              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-              data,
-            });
-            this.kafkaConsumer.commitMessageSync(message);
-            logger.info(`Offset ${message.offset} committed to Kafka...`, {
-              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-              data,
-            });
+          logger.info(`Handling message...`, {
+            tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+            data,
+          });
+          await this.handleMessage(dto, data);
+          logger.info(`Message handled. Committing to Kafka...`, {
+            tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+            data,
+          });
+          this.kafkaConsumer.commitMessageSync(message);
+          logger.info(`Offset committed to Kafka...`, {
+            tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+            data,
+          });
 
-            if (this.dependencies.redis) {
-              await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
-            }
-          } catch (err) {
-            await this.publishError(err, message);
-            logger.error(err.message, {
-              stack: err.stack,
-              tags: [this.type, 'consumer'],
-              data,
-            });
+          if (this.dependencies.redis) {
+            await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
           }
         });
 

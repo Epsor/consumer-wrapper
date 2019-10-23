@@ -147,30 +147,6 @@ describe('Consumer', () => {
     });
   });
 
-  describe('publishError', () => {
-    afterEach(() => {
-      encode.mockReset();
-    });
-
-    it('should encode an error', async () => {
-      const error = new Error('My message.');
-
-      const consumer = new Consumer('test', []);
-
-      await consumer.publishError(error, 'DtoString');
-
-      expect(encode).toHaveBeenCalledTimes(1);
-      expect(encode).toHaveBeenCalledWith(
-        'error',
-        expect.objectContaining({
-          consumer: 'test',
-          message: 'My message.',
-          encodedDto: 'DtoString',
-        }),
-      );
-    });
-  });
-
   describe('handleMessage', () => {
     beforeEach(() => {
       logger.info.mockReset();
