@@ -1,6 +1,6 @@
 {
   "name": "@epsor/consumer-wrapper",
-  "version": "2.2.7",
+  "version": "2.2.8",
   "description": "Event consumer",
   "homepage": "https://github.com/Epsor/epsor-v2/tree/master/packages/tunnel-b2c-api-test-kafka-stream#readme",
   "bugs": {
@@ -20,7 +20,7 @@
     "commit": "git-cz",
     "lint": "eslint src --cache --max-warnings=0 --cache-location .eslintcache",
     "prepare": "npm run build",
-    "start": "babel src -d dist --watch --copy-files --verbose",
+    "start": "nodemon -L --exec babel-node src/index.js",
     "test": "NODE_ENV=test jest --coverage"
   },
   "husky": {
@@ -43,16 +43,19 @@
   "dependencies": {
     "@babel/cli": "^7.5.0",
     "@babel/core": "^7.5.4",
+    "@babel/node": "^7.6.3",
     "@babel/preset-env": "^7.5.4",
     "@epsor/dto": "^2.0.8",
     "@epsor/kafka-producer": "^3.1.0",
     "@epsor/logger": "^1.0.0",
     "@epsor/mongodb-wrapper": "^2.0.3",
     "aigle": "^1.14.1",
+    "express": "^4.17.1",
     "mongodb": "^3.2.7",
     "node-rdkafka": "^2.7.1-2",
     "nodemon": "^1.19.1",
-    "redis": "^2.8.0"
+    "redis": "^2.8.0",
+    "supertest": "^4.0.2"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^8.1.0",
