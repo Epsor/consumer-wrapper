@@ -13,6 +13,7 @@ It wrap the consumer connection to kafka, redis connexion, mongodb connexion to 
 - `REDIS_URL` - The redis server url
 - `KAFKA_HOST` - The kafka server info IP:PORT
 - `KAFKA_GROUP_ID` - The kafka group id
+- `HEALTHCHECK_PORT` - The port to perfrom health check
 
 ## AbstractHandler
 
@@ -71,7 +72,7 @@ This package contains an express api endpoint to check pod's health.
 ##### How to
 
 - `npm start` to start the server.
-- go to `http://localhost:{PORT}/.well-known/express/server-health`. Default port is `8000`
+- go to `http://localhost:{HEALTHCHECK_PORT}/.well-known/express/server-health`. Default port is `8000`
 
 please look at the README.md of **epsor-v2** to get the list of supported ports for every consumers.
 
