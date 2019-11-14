@@ -13,7 +13,6 @@ It wrap the consumer connection to kafka, redis connexion, mongodb connexion to 
 - `REDIS_URL` - The redis server url
 - `KAFKA_HOST` - The kafka server info IP:PORT
 - `KAFKA_GROUP_ID` - The kafka group id
-- `HEALTHCHECK_PORT` - The port to perfrom health check
 
 ## AbstractHandler
 
