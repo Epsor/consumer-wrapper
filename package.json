@@ -1,6 +1,6 @@
 {
   "name": "@epsor/consumer-wrapper",
-  "version": "2.2.12",
+  "version": "2.2.13",
   "description": "Event consumer",
   "homepage": "https://github.com/Epsor/epsor-v2/tree/master/packages/tunnel-b2c-api-test-kafka-stream#readme",
   "bugs": {
@@ -20,7 +20,6 @@
     "commit": "git-cz",
     "lint": "eslint src --cache --max-warnings=0 --cache-location .eslintcache",
     "prepare": "npm run build",
-    "start": "nodemon -L --exec babel-node src/index.js",
     "test": "NODE_ENV=test jest --coverage"
   },
   "husky": {
@@ -41,26 +40,22 @@
     }
   },
   "dependencies": {
-    "@babel/cli": "^7.5.0",
-    "@babel/core": "^7.5.4",
-    "@babel/node": "^7.6.3",
-    "@babel/preset-env": "^7.5.4",
-    "@epsor/dto": "^2.0.8",
-    "@epsor/logger": "^1.0.0",
+    "@epsor/dto": "^2.0.81",
+    "@epsor/logger": "^1.1.3",
     "@epsor/mongodb-wrapper": "^2.1.4",
     "aigle": "^1.14.1",
-    "express": "^4.17.1",
     "mongodb": "^3.2.7",
     "node-rdkafka": "^2.7.1-2",
-    "nodemon": "^1.19.1",
-    "redis": "^2.8.0",
-    "supertest": "^4.0.2"
+    "redis": "^2.8.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.6.4",
+    "@babel/core": "^7.6.4",
+    "@babel/preset-env": "^7.6.3",
     "@commitlint/config-conventional": "^8.1.0",
     "@shelf/jest-mongodb": "^1.1.0",
-    "@typescript-eslint/eslint-plugin": "^2.4.0",
-    "@typescript-eslint/parser": "^2.4.0",
+    "@typescript-eslint/eslint-plugin": "^2.7.0",
+    "@typescript-eslint/parser": "^2.7.0",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^24.8.0",
     "commitizen": "^4.0.3",
@@ -77,6 +72,6 @@
     "jest": "^24.8.0",
     "jest-expo": "^33.0.2",
     "prettier": "^1.18.2",
-    "typescript": "^3.6.4"
+    "typescript": "^3.7.2"
   }
 }
