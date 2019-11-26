@@ -191,28 +191,33 @@ class Consumer {
           return reject(error);
         }
         await eachSeries(messages, async message => {
-          const data = message.value.toString();
+          try {
+            const data = message.value.toString();
+            const dto = decode(JSON.parse(data));
+            const dtoType = dto.constructor.type;
 
-          const dto = decode(JSON.parse(data));
-          const dtoType = dto.constructor.type;
+            logger.info(`Handling message...`, {
+              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+              data,
+            });
 
-          logger.info(`Handling message...`, {
-            tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-            data,
-          });
-          await this.handleMessage(dto, data);
-          logger.info(`Message handled. Committing to Kafka...`, {
-            tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-            data,
-          });
-          this.kafkaConsumer.commitMessageSync(message);
-          logger.info(`Offset committed to Kafka...`, {
-            tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-            data,
-          });
+            await this.handleMessage(dto, data);
+            logger.info(`Message handled. Committing to Kafka...`, {
+              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+              data,
+            });
 
-          if (this.dependencies.redis) {
-            await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
+            this.kafkaConsumer.commitMessageSync(message);
+            logger.info(`Offset committed to Kafka...`, {
+              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+              data,
+            });
+
+            if (this.dependencies.redis) {
+              await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
+            }
+          } catch (err) {
+            reject(err);
           }
         });
 
@@ -251,6 +256,7 @@ class Consumer {
           type: dtoType,
           data,
         });
+        throw err;
       }
     });
   }
