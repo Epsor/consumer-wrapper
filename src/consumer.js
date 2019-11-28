@@ -80,6 +80,14 @@ class Consumer {
         'auto.offset.reset': 'earliest',
       },
     );
+
+    /* istanbul ignore next */
+    this.kafkaConsumer.on('error', err => {
+      logger.error('Kafka Consumer error', {
+        tags: [this.type, 'consumer', 'event', 'error'],
+        errorStack: err.stack,
+      });
+    });
   }
 
   /**
@@ -152,26 +160,28 @@ class Consumer {
   /* istanbul ignore next */
   connect(topics) {
     return new Promise((resolve, reject) => {
-      this.kafkaConsumer
-        .on('ready', () => {
+      // Connect to the broker manually
+      logger.info('Connecting to kafka...', { tags: [this.type, 'consumer'] });
+
+      this.kafkaConsumer.connect({}, err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        try {
           this.kafkaConsumer.subscribe(topics);
+
           logger.info('Connected and ready to consume', {
             tags: [this.type, 'consumer'],
             topics,
           });
-          return resolve();
-        })
-        .on('error', err => {
-          logger.error('Kafka connection error', {
-            stack: err.stack,
-            tags: [this.type, 'consumer'],
-            message: err.message,
-          });
-          return reject(err);
-        });
-      // Connect to the broker manually
-      logger.info('Connecting to kafka...', { tags: [this.type, 'consumer'] });
-      this.kafkaConsumer.connect();
+
+          resolve();
+        } catch (err2) {
+          reject(err2);
+        }
+      });
     });
   }
 
