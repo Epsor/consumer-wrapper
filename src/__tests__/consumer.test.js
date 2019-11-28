@@ -192,7 +192,7 @@ describe('Consumer', () => {
       expect(logger.error).toHaveBeenCalledTimes(0);
     });
 
-    it('should not throw an error if the handler throws an error', async () => {
+    it('should throw an error if the handler throws an error', async () => {
       const handler = {
         type: 'A',
         allowedTypes: ['test'],
@@ -207,13 +207,9 @@ describe('Consumer', () => {
         }
       })();
 
-      expect(logger.error).toHaveBeenCalledTimes(0);
-
       const consumer = new Consumer('test', [handler]);
 
-      await consumer.handleMessage(dto, { value: 'coucou' });
-
-      expect(logger.error).toHaveBeenCalledTimes(1);
+      await expect(consumer.handleMessage(dto, { value: 'coucou' })).rejects.toThrow();
     });
   });
 });
