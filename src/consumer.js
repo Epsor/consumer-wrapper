@@ -186,6 +186,35 @@ class Consumer {
   }
 
   /**
+   * Disconnect from Kafka
+   *
+   * @returns {Promise}
+   */
+  /* istanbul ignore next */
+  disconnect() {
+    return new Promise((resolve, reject) => {
+      if (!this.kafkaConsumer.isConnected()) {
+        logger.info('Kafka was already disconnected', { tags: [this.type, 'consumer'] });
+        resolve();
+        return;
+      }
+
+      logger.info('Disconnecting from kafka...', { tags: [this.type, 'consumer'] });
+
+      this.kafkaConsumer.disconnect(err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        logger.info('Disconnected from kafka', { tags: [this.type, 'consumer'] });
+
+        resolve();
+      });
+    });
+  }
+
+  /**
    * Consume messages from kafka and handle them
    * then it call itsefl again to keep consuming
    *
