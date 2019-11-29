@@ -132,18 +132,39 @@ describe('Consumer', () => {
   describe('consume', () => {
     it('should handle consume errors', async () => {
       const consumer = new Consumer('test', []);
+      const error = new Error('error');
 
       await consumer.connect();
       consumer.kafkaConsumer = {
         consume: jest.fn((number, callback) => {
-          callback(new Error('error'));
+          callback(error);
         }),
       };
-      try {
-        await consumer.consume(1);
-      } catch (e) {
-        expect(consumer.kafkaConsumer.consume).toHaveBeenCalledTimes(1);
-      }
+
+      const consumePromise = consumer.consume(1, { semaphore: false });
+
+      await expect(consumePromise).rejects.toThrow(error);
+      expect(consumer.kafkaConsumer.consume).toHaveBeenCalledTimes(1);
+    });
+
+    it('should stop loop if semaphore is lit', async () => {
+      const consumer = new Consumer('test', []);
+
+      await consumer.connect();
+      consumer.kafkaConsumer = {
+        consume: jest.fn((number, callback) => {
+          callback(null, []);
+        }),
+      };
+
+      const cancelSemaphore = { semaphore: false };
+      const consumePromise = consumer.consume(1, cancelSemaphore);
+
+      setTimeout(() => {
+        cancelSemaphore.semaphore = true;
+      }, 500);
+
+      await expect(consumePromise).resolves.toBeUndefined();
     });
   });
 

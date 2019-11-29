@@ -2,8 +2,13 @@
 import EventEmitter from 'events';
 
 class KafkaConsumer extends EventEmitter {
-  connect() {
-    this.emit('ready');
+  connect(options, callback) {
+    callback(null);
+    return jest.fn()();
+  }
+
+  disconnect(callback) {
+    callback(null);
     return jest.fn()();
   }
 
