@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@epsor/dto": "^2.0.81",
-    "@epsor/logger": "^1.1.3",
+    "@epsor/logger": "^1.1.4",
     "@epsor/mongodb-wrapper": "^2.1.4",
     "aigle": "^1.14.1",
     "mongodb": "^3.2.7",

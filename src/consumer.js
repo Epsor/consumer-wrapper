@@ -80,6 +80,14 @@ class Consumer {
         'auto.offset.reset': 'earliest',
       },
     );
+
+    /* istanbul ignore next */
+    this.kafkaConsumer.on('error', err => {
+      logger.error('Kafka Consumer error', {
+        tags: [this.type, 'consumer', 'event', 'error'],
+        errorStack: err.stack,
+      });
+    });
   }
 
   /**
@@ -133,13 +141,18 @@ class Consumer {
    * @param {Object} config                        - config to setup consumer
    * @param {Object} config.topics                 - topics to subscribe
    * @param {Object} config.messagesPerConsumption - Number of message to consume per cycle
+   * @param {Object} config.cancelSemaphore        - Semaphore object to cancel run
    *
    * @return {Promise}
    */
   /* istanbul ignore next */
-  async run({ topics = [process.env.EVENT_TOPIC], messagesPerConsumption = 1 } = {}) {
+  async run({
+    topics = [process.env.EVENT_TOPIC],
+    messagesPerConsumption = 1,
+    cancelSemaphore = { semaphore: false },
+  } = {}) {
     await this.connect(topics);
-    await this.consume(messagesPerConsumption);
+    await this.consume(messagesPerConsumption, cancelSemaphore);
   }
 
   /**
@@ -152,26 +165,57 @@ class Consumer {
   /* istanbul ignore next */
   connect(topics) {
     return new Promise((resolve, reject) => {
-      this.kafkaConsumer
-        .on('ready', () => {
+      // Connect to the broker manually
+      logger.info('Connecting to kafka...', { tags: [this.type, 'consumer'] });
+
+      this.kafkaConsumer.connect({}, err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        try {
           this.kafkaConsumer.subscribe(topics);
+
           logger.info('Connected and ready to consume', {
             tags: [this.type, 'consumer'],
             topics,
           });
-          return resolve();
-        })
-        .on('error', err => {
-          logger.error('Kafka connection error', {
-            stack: err.stack,
-            tags: [this.type, 'consumer'],
-            message: err.message,
-          });
-          return reject(err);
-        });
-      // Connect to the broker manually
-      logger.info('Connecting to kafka...', { tags: [this.type, 'consumer'] });
-      this.kafkaConsumer.connect();
+
+          resolve();
+        } catch (err2) {
+          reject(err2);
+        }
+      });
+    });
+  }
+
+  /**
+   * Disconnect from Kafka
+   *
+   * @returns {Promise}
+   */
+  /* istanbul ignore next */
+  disconnect() {
+    return new Promise((resolve, reject) => {
+      if (!this.kafkaConsumer.isConnected()) {
+        logger.info('Kafka was already disconnected', { tags: [this.type, 'consumer'] });
+        resolve();
+        return;
+      }
+
+      logger.info('Disconnecting from kafka...', { tags: [this.type, 'consumer'] });
+
+      this.kafkaConsumer.disconnect(err => {
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        logger.info('Disconnected from kafka', { tags: [this.type, 'consumer'] });
+
+        resolve();
+      });
     });
   }
 
@@ -179,20 +223,29 @@ class Consumer {
    * Consume messages from kafka and handle them
    * then it call itsefl again to keep consuming
    *
-   * @param {Number} number - batch of message to consume
+   * @param {Number} number          - batch of message to consume
+   * @param {Object} cancelSemaphore - Semaphore object to cancel run
    *
    * @return {Promise}
    */
   /* istanbul ignore next */
-  consume(number) {
+  consume(number, cancelSemaphore) {
     return new Promise((resolve, reject) => {
-      this.kafkaConsumer.consume(number, async (error, messages) => {
-        if (error) {
-          return reject(error);
+      if (cancelSemaphore.semaphore) {
+        resolve();
+        return;
+      }
+
+      this.kafkaConsumer.consume(number, async (err, messages) => {
+        if (err) {
+          reject(err);
+          return;
         }
-        await eachSeries(messages, async message => {
-          try {
+
+        try {
+          await eachSeries(messages, async message => {
             const data = message.value.toString();
+
             const dto = decode(JSON.parse(data));
             const dtoType = dto.constructor.type;
 
@@ -200,13 +253,11 @@ class Consumer {
               tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
               data,
             });
-
             await this.handleMessage(dto, data);
             logger.info(`Message handled. Committing to Kafka...`, {
               tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
               data,
             });
-
             this.kafkaConsumer.commitMessageSync(message);
             logger.info(`Offset committed to Kafka...`, {
               tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
@@ -216,12 +267,19 @@ class Consumer {
             if (this.dependencies.redis) {
               await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
             }
-          } catch (err) {
-            reject(err);
-          }
-        });
+          });
+        } catch (err2) {
+          logger.error('Kafka consumer failed consuming messages', {
+            tags: [this.type, 'consumer', 'consume'],
+            messages,
+            errorStack: err2.stack,
+          });
 
-        return resolve(this.consume(number));
+          reject(err2);
+          return;
+        }
+
+        resolve(this.consume(number, cancelSemaphore));
       });
     });
   }
