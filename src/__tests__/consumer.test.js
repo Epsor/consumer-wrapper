@@ -170,7 +170,7 @@ describe('Consumer', () => {
 
       await consumer.handleMessage(dto, { value: 'coucou' });
       expect(handler.handle).toHaveBeenCalledTimes(1);
-      expect(handler.handle).toHaveBeenCalledWith(dependencies, dto);
+      expect(handler.handle).toHaveBeenCalledWith(dependencies, dto, { value: 'coucou' });
     });
 
     it('should not log error witout redis', async () => {

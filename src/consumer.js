@@ -201,7 +201,7 @@ class Consumer {
               data,
             });
 
-            await this.handleMessage(dto, data);
+            await this.handleMessage(dto, message);
             logger.info(`Message handled. Committing to Kafka...`, {
               tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
               data,
@@ -233,12 +233,13 @@ class Consumer {
    *
    * @async
    * @param {AbstractDto} dto - The Kafka message as an AbstractDto
-   * @param {Object} data  - data from from Kafka message
+   * @param {Object} message  - message from from Kafka
+   *
    *
    * @return {Promise}
    */
   /* istanbul ignore next */
-  async handleMessage(dto, data) {
+  async handleMessage(dto, message) {
     const dtoType = dto.constructor.type;
     const handlers = this.handlers[dtoType] || [];
 
@@ -248,13 +249,13 @@ class Consumer {
 
     await forEach(handlers, async handler => {
       try {
-        await handler.handle(this.dependencies, dto);
+        await handler.handle(this.dependencies, dto, message);
       } catch (err) {
         logger.error('Cannot handle DTO', {
           tags: [this.type, 'consumer', dtoType, handler.constructor.handlerName],
           stack: err.stack,
           type: dtoType,
-          data,
+          data: message.value.toString(),
         });
         throw err;
       }
