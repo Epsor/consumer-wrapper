@@ -201,17 +201,20 @@ class Consumer {
               data,
             });
 
-            await this.handleMessage(dto, message);
-            logger.info(`Message handled. Committing to Kafka...`, {
-              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-              data,
-            });
+            const handlerCount = await this.handleMessage(dto, message);
 
-            this.kafkaConsumer.commitMessageSync(message);
-            logger.info(`Offset committed to Kafka...`, {
-              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
-              data,
-            });
+            if (process.env.DANGEROUS_SKIP_COMMIT_TO_KAFKA !== 'true' || handlerCount) {
+              logger.info(`Message handled. Committing to Kafka...`, {
+                tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+                data,
+              });
+
+              this.kafkaConsumer.commitMessageSync(message);
+              logger.info(`Offset committed to Kafka...`, {
+                tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+                data,
+              });
+            }
 
             if (this.dependencies.redis) {
               await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
@@ -236,16 +239,12 @@ class Consumer {
    * @param {Object} message  - message from from Kafka
    *
    *
-   * @return {Promise}
+   * @return {Promise<number>}
    */
   /* istanbul ignore next */
   async handleMessage(dto, message) {
     const dtoType = dto.constructor.type;
     const handlers = this.handlers[dtoType] || [];
-
-    if (handlers.length === 0) {
-      return;
-    }
 
     await forEach(handlers, async handler => {
       try {
@@ -260,6 +259,7 @@ class Consumer {
         throw err;
       }
     });
+    return handlers.length;
   }
 }
 
