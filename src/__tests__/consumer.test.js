@@ -11,10 +11,17 @@ describe('Consumer', () => {
       expect(new Consumer('test', [])).toBeTruthy();
     });
 
-    it('should initialize Consumer.type', () => {
+    it('should initialize Consumer.dbName', () => {
       const consumer = new Consumer('test', []);
 
-      expect(consumer.type).toBe('test');
+      expect(consumer.dbName).toBe('test');
+      expect(consumer.groupId).toBe('test');
+    });
+
+    it('should initialize Consumer.groupId', () => {
+      const consumer = new Consumer('test', [], {}, {}, 'testGroupId');
+
+      expect(consumer.groupId).toBe('testGroupId');
     });
 
     it('should initialize Consumer.dependencies to a default value', () => {
