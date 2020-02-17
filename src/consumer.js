@@ -1,5 +1,6 @@
 import { KafkaConsumer } from 'node-rdkafka';
 import eachSeries from 'aigle/eachSeries';
+import each from 'aigle/each';
 import forEach from 'aigle/forEach';
 import redis from 'redis';
 import logger from '@epsor/logger';
@@ -47,6 +48,8 @@ class Consumer {
       kafkaHost = process.env.KAFKA_HOST,
       kafkaUsername = process.env.KAFKA_USERNAME,
       kafkaPassword = process.env.KAFKA_PASSWORD,
+      autoCommit = false,
+      parallelConsumption = false,
     } = {},
     groupId = null,
   ) {
@@ -57,6 +60,9 @@ class Consumer {
     this.kafkaHost = kafkaHost;
     this.kafkaUsername = kafkaUsername;
     this.kafkaPassword = kafkaPassword;
+    this.autoCommit = autoCommit;
+    this.parallelConsumption = parallelConsumption;
+    this.eachFunction = parallelConsumption ? each : eachSeries;
 
     /* istanbul ignore next */
     const kafkaConfig =
@@ -75,7 +81,7 @@ class Consumer {
       {
         'group.id': this.groupId,
         'metadata.broker.list': this.kafkaHost,
-        'enable.auto.commit': false,
+        'enable.auto.commit': this.autoCommit,
         ...kafkaConfig,
       },
       {
@@ -192,7 +198,8 @@ class Consumer {
         if (error) {
           return reject(error);
         }
-        await eachSeries(messages, async message => {
+
+        const promise = this.eachFunction(messages, async message => {
           try {
             const data = message.value.toString();
             const dto = decode(JSON.parse(data));
@@ -205,7 +212,7 @@ class Consumer {
 
             const handlerCount = await this.handleMessage(dto, message);
 
-            if (process.env.DANGEROUS_SKIP_COMMIT_TO_KAFKA !== 'true' || handlerCount) {
+            if (handlerCount && !this.autoCommit) {
               logger.info(`Message handled. Committing to Kafka...`, {
                 tags: [this.groupId, 'consumer', 'handleMessage', dtoType, message.offset],
                 data,
@@ -225,6 +232,8 @@ class Consumer {
             reject(err);
           }
         });
+
+        if (!this.parallelConsumption) await promise;
 
         return resolve(this.consume(number));
       });
