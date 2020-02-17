@@ -180,6 +180,26 @@ describe('Consumer', () => {
       expect(handler.handle).toHaveBeenCalledWith(dependencies, dto, { value: 'coucou' });
     });
 
+    it('should handle & publish on a validDto with parallel options', async () => {
+      const handler = { type: 'A', allowedTypes: ['test'], handle: jest.fn() };
+      const publish = jest.fn();
+      const dependencies = {
+        mongo,
+        redis: { publish },
+      };
+      const dto = new (class {
+        static get type() {
+          return 'test';
+        }
+      })();
+
+      const consumer = new Consumer('test', [handler], dependencies, { parallelConsumption: true });
+
+      await consumer.handleMessage(dto, { value: 'coucou' });
+      expect(handler.handle).toHaveBeenCalledTimes(1);
+      expect(handler.handle).toHaveBeenCalledWith(dependencies, dto, { value: 'coucou' });
+    });
+
     it('should not log error witout redis', async () => {
       const handler = { type: 'A', allowedTypes: ['test'], handle: jest.fn() };
       const dependencies = {

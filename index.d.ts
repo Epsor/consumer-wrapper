@@ -22,6 +22,8 @@ export class Consumer {
       kafkaHost?: string;
       kafkaUsername?: string;
       kafkaPassword?: string;
+      autoCommit?: boolean;
+      parallelConsumption?: boolean;
     },
     groupId?: string,
   );
