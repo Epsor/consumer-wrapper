@@ -40,20 +40,15 @@
     }
   },
   "dependencies": {
+    "@epsor/dto": "~3.1.0",
+    "@epsor/logger": "^1.1.7",
+    "@epsor/mongodb-wrapper": "^2.1.8",
     "aigle": "^1.14.1",
     "mongodb": "^3.2.7",
     "node-rdkafka": "^2.7.1-2",
     "redis": "^2.8.0"
   },
-  "peerDependencies": {
-    "@epsor/dto": "~3.0.2",
-    "@epsor/logger": "^1.1.7",
-    "@epsor/mongodb-wrapper": "^2.1.8"
-  },
   "devDependencies": {
-    "@epsor/dto": "~3.1.0",
-    "@epsor/logger": "^1.1.7",
-    "@epsor/mongodb-wrapper": "^2.1.8",
     "@babel/cli": "^7.6.4",
     "@babel/core": "^7.6.4",
     "@babel/preset-env": "^7.6.3",
