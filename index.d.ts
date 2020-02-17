@@ -23,6 +23,7 @@ export class Consumer {
       kafkaUsername?: string;
       kafkaPassword?: string;
     },
+    groupId?: string,
   );
 
   initDependencies(dependencies?: { redis?: boolean; mongo?: boolean }): Promise<void>;

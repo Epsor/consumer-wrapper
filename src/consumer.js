@@ -29,18 +29,18 @@ class Consumer {
   /**
    * Contruct a consumer.
    *
-   * @param {String} type - The consumer type, used for logger, stream groupId, redis PSUBSCRIBE and mongoDb database's name
+   * @param {String} dbName - mongoDb database name
    * @param {Array.<AbstractHandler>} handlers - The handlers
    * @param {Object<String,Object>} dependencies - The consumer dependencies
    * @param {Object} credentials - The credentials needed for Kafka
    * @param {String|undefined} credentials.kafkaHost - Kafka Host domain
    * @param {String|undefined} credentials.kafkaUsername - Kafka API key
    * @param {String|undefined} credentials.kafkaPassword - Kafka API secret
-   * @param {Object} options - Options from library use to consume messages from Kafka
+   * @param {string|null} groupId - explicit consumer group ID for Confluent, used for logger & redis PSUBSCRIBE. Will be narrowed to the database name if null
    */
 
   constructor(
-    type,
+    dbName,
     handlers,
     dependencies = {},
     {
@@ -48,8 +48,10 @@ class Consumer {
       kafkaUsername = process.env.KAFKA_USERNAME,
       kafkaPassword = process.env.KAFKA_PASSWORD,
     } = {},
+    groupId = null,
   ) {
-    this.type = type;
+    this.dbName = dbName;
+    this.groupId = groupId || dbName;
     this.handlers = handlers.reduce(handlerReducer, {});
     this.dependencies = dependencies;
     this.kafkaHost = kafkaHost;
@@ -71,7 +73,7 @@ class Consumer {
 
     this.kafkaConsumer = new KafkaConsumer(
       {
-        'group.id': this.type,
+        'group.id': this.groupId,
         'metadata.broker.list': this.kafkaHost,
         'enable.auto.commit': false,
         ...kafkaConfig,
@@ -96,7 +98,7 @@ class Consumer {
     if (withMongo === true) {
       const mongoDbUrl = process.env.MONGODB_URL || 'mongodb://localhost:27017';
 
-      this.dependencies.mongo = await mongo.connect(mongoDbUrl, this.type);
+      this.dependencies.mongo = await mongo.connect(mongoDbUrl, this.dbName);
     }
 
     if (withRedis === true) {
@@ -156,7 +158,7 @@ class Consumer {
         .on('ready', () => {
           this.kafkaConsumer.subscribe(topics);
           logger.info('Connected and ready to consume', {
-            tags: [this.type, 'consumer'],
+            tags: [this.groupId, 'consumer'],
             topics,
           });
           return resolve();
@@ -164,13 +166,13 @@ class Consumer {
         .on('error', err => {
           logger.error('Kafka connection error', {
             stack: err.stack,
-            tags: [this.type, 'consumer'],
+            tags: [this.groupId, 'consumer'],
             message: err.message,
           });
           return reject(err);
         });
       // Connect to the broker manually
-      logger.info('Connecting to kafka...', { tags: [this.type, 'consumer'] });
+      logger.info('Connecting to kafka...', { tags: [this.groupId, 'consumer'] });
       this.kafkaConsumer.connect();
     });
   }
@@ -197,7 +199,7 @@ class Consumer {
             const dtoType = dto.constructor.type;
 
             logger.info(`Handling message...`, {
-              tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+              tags: [this.groupId, 'consumer', 'handleMessage', dtoType, message.offset],
               data,
             });
 
@@ -205,19 +207,19 @@ class Consumer {
 
             if (process.env.DANGEROUS_SKIP_COMMIT_TO_KAFKA !== 'true' || handlerCount) {
               logger.info(`Message handled. Committing to Kafka...`, {
-                tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+                tags: [this.groupId, 'consumer', 'handleMessage', dtoType, message.offset],
                 data,
               });
 
               this.kafkaConsumer.commitMessageSync(message);
               logger.info(`Offset committed to Kafka...`, {
-                tags: [this.type, 'consumer', 'handleMessage', dtoType, message.offset],
+                tags: [this.groupId, 'consumer', 'handleMessage', dtoType, message.offset],
                 data,
               });
             }
 
             if (this.dependencies.redis) {
-              await this.dependencies.redis.publish(`${this.type}:${dtoType}`, data);
+              await this.dependencies.redis.publish(`${this.groupId}:${dtoType}`, data);
             }
           } catch (err) {
             reject(err);
@@ -251,7 +253,7 @@ class Consumer {
         await handler.handle(this.dependencies, dto, message);
       } catch (err) {
         logger.error('Cannot handle DTO', {
-          tags: [this.type, 'consumer', dtoType, handler.constructor.handlerName],
+          tags: [this.groupId, 'consumer', dtoType, handler.constructor.handlerName],
           stack: err.stack,
           type: dtoType,
           data: message.value.toString(),
