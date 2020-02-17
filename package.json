@@ -1,6 +1,6 @@
 {
   "name": "@epsor/consumer-wrapper",
-  "version": "3.0.2",
+  "version": "3.1.0",
   "description": "Event consumer",
   "homepage": "https://github.com/Epsor/epsor-v2/tree/master/packages/tunnel-b2c-api-test-kafka-stream#readme",
   "bugs": {
@@ -51,7 +51,7 @@
     "@epsor/mongodb-wrapper": "^2.1.8"
   },
   "devDependencies": {
-    "@epsor/dto": "~3.0.2",
+    "@epsor/dto": "~3.1.0",
     "@epsor/logger": "^1.1.7",
     "@epsor/mongodb-wrapper": "^2.1.8",
     "@babel/cli": "^7.6.4",
