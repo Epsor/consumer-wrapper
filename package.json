@@ -51,7 +51,7 @@
     "@epsor/mongodb-wrapper": "^2.1.8"
   },
   "devDependencies": {
-    "@epsor/dto": "~3.1.0",
+    "@epsor/dto": "^3.1.5",
     "@epsor/logger": "^1.1.7",
     "@epsor/mongodb-wrapper": "^2.1.8",
     "@babel/cli": "^7.6.4",
